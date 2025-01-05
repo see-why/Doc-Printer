@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup 
 
+# TO-DO: add readme file
+
 def fetch_and_print_from_doc(doc_url):
     try:
         # Extract document ID from URL
@@ -17,15 +19,34 @@ def fetch_and_print_from_doc(doc_url):
         soup = BeautifulSoup(response.text, 'html.parser')
         content = soup.find('table').find_all('tr')
 
-        coordinates = [(cell[0].get_text().strip(),
-                       cell[1].get_text().strip(),
-                       cell[2].get_text().strip())
+        # so we have x, y, char as opposed to x, char, y
+        coordinates = [(int(cell[0].get_text().strip()),
+                       int(cell[2].get_text().strip()),
+                       cell[1].get_text().strip())
                     for cell in [row.find_all('td') for row in content[1:]]]
 
         print(f"coordinates: ${coordinates}")
+        print_coordinates(coordinates)
 
     except Exception as e:
         print(f"Error processing document: {str(e)}")
+
+
+def print_coordinates(coordinates):
+    max_x = max(coord[0] for coord in coordinates) + 1
+    max_y = max(coord[1] for coord in coordinates) + 1
+
+    grid = [[' ' for _ in range(max_x)] for _ in range(max_y)]
+    print(f"grid before: ${grid}")
+
+    for x, y, char in coordinates:
+        grid[y][x] = char
+    
+    grid.reverse()
+    print(f"grid after: ${grid}")
+
+    for row in grid:
+        print("".join(row))
 
 # Example usage with coordinates that form the letter 'F'
 example_coords = [
