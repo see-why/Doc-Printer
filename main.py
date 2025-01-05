@@ -4,20 +4,32 @@ from bs4 import BeautifulSoup
 # TO-DO: add readme file
 
 def fetch_and_print_from_doc(doc_url):
+    """
+    Fetches coordinates from a Google Doc URL and prints the resulting ASCII art.
+    
+    Args:
+        doc_url (str): URL of the published Google Doc containing coordinate data
+    """
     try:
         # Extract document ID from URL
         if '/pub' not in doc_url:
-            print("Please provide a public document")
-            return
+            raise ValueError("URL must be a published Google Doc (ending in /pub)")
         
         # Add headers to request text format
-        headers = {
-            'Accept': 'text/plain'
-        }
-        
-        response = requests.get(doc_url, headers=headers)
+        response = requests.get(
+            doc_url, 
+            headers={'Accept': 'text/plain'},
+            timeout=10  # Add timeout for safety
+        )
+        response.raise_for_status()
+
         soup = BeautifulSoup(response.text, 'html.parser')
-        content = soup.find('table').find_all('tr')
+        table = soup.find('table')
+
+        if not table:
+            raise ValueError("No data table found in document")
+
+        content = table.find_all('tr')
 
         # so we have x, y, char as opposed to x, char, y
         coordinates = [(int(cell[0].get_text().strip()),
@@ -32,6 +44,16 @@ def fetch_and_print_from_doc(doc_url):
 
 
 def print_coordinates(coordinates):
+    """
+    Prints ASCII art from a list of coordinates.
+    
+    Args:
+        coordinates (list): List of tuples (x, y, char) representing points to plot
+    """
+    if not coordinates:
+        print("No coordinates to display")
+        return
+
     max_x = max(coord[0] for coord in coordinates) + 1
     max_y = max(coord[1] for coord in coordinates) + 1
 
